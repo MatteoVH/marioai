@@ -1,5 +1,7 @@
 package competition.cig.robinbaumgarten.astar;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,8 +20,14 @@ import competition.cig.robinbaumgarten.astar.sprites.SpriteContext;
 
 
 
+
 public class LevelScene implements SpriteContext, Cloneable
 {
+    public static final int LEARNING_ARRAY_BOX_DIMENSION = 24;
+    public static final int LEARNING_ARRAY_COLUMNS = 480 / LEARNING_ARRAY_BOX_DIMENSION;
+    public static final int LEARNING_ARRAY_ROWS = 320 / LEARNING_ARRAY_BOX_DIMENSION + 2;
+    public static final int LEARNING_ARBITRARY_DIMENSIONS = 5;
+
     private List<Sprite> sprites = new ArrayList<Sprite>();
     private List<Sprite> spritesToAdd = new ArrayList<Sprite>();
     private List<Sprite> spritesToRemove = new ArrayList<Sprite>();
@@ -31,6 +39,7 @@ public class LevelScene implements SpriteContext, Cloneable
     
     public int verbose = 0;
 
+
     public boolean paused = true;
     public int startTime = 0;
     public int timeLeft;
@@ -40,7 +49,9 @@ public class LevelScene implements SpriteContext, Cloneable
     public int coinsCollected = 0;
     public int powerUpsCollected = 0;
     public int otherTricks = 0;
-        
+
+    public FileWriter fw = null;
+    public int linesWritten = 0;
     
     public static List<Sprite> cloneList(List<Sprite> list) throws CloneNotSupportedException {
         List<Sprite> clone = new ArrayList<Sprite>(list.size());
@@ -201,6 +212,13 @@ public class LevelScene implements SpriteContext, Cloneable
    
     public void init()
     {
+
+        try {
+            fw = new FileWriter("mario_data.csv");
+        } catch (IOException e) {
+            System.out.println("Failed");
+        }
+
         Level.loadBehaviors();
         
         Sprite.spriteContext = this;
@@ -231,6 +249,100 @@ public class LevelScene implements SpriteContext, Cloneable
         fireballsToCheck.add(fireball);
     }
 
+    public int getLearningArrayPos(Sprite sprite) {
+        int xPosRelativeToCamera = (int) sprite.x - (int) xCam;
+
+        int yPos = (int) sprite.y / LEARNING_ARRAY_BOX_DIMENSION;
+        int xPos = xPosRelativeToCamera / LEARNING_ARRAY_BOX_DIMENSION;
+
+        int yBoost = yPos * LEARNING_ARRAY_COLUMNS;
+//        System.out.println("position calculated from sprite: " + (xPos + yBoost));
+        return xPos + yBoost;
+    }
+
+    public int getLearningArrayPosFromCoord(int x, int y) {
+        int X_CAM_MAP = mario.mapX - LEARNING_ARRAY_COLUMNS/2;
+        //System.out.println(X_CAM_MAP);
+        //System.out.println(x+" "+y);
+        int xPosRelativeToCamera = x - (int) X_CAM_MAP;
+        //System.out.println(xPosRelativeToCamera);
+
+        int yBoost = y * LEARNING_ARRAY_COLUMNS;
+        //System.out.println("position calculated: " + (xPosRelativeToCamera + yBoost));
+
+        return xPosRelativeToCamera + yBoost;
+    }
+
+    //dump all the enemy
+    public void dumpGameState() {
+        if(mario.mapX < 30 || mario.mapX > 140)
+            return;
+        int[] gameState = new int[LEARNING_ARRAY_COLUMNS * LEARNING_ARRAY_ROWS + LEARNING_ARBITRARY_DIMENSIONS];
+        for(int x = 0; x < gameState.length; x++)
+            gameState[x] = 0;
+
+        //System.out.println(mario.mapX);
+        //System.out.println(level.width);
+
+        for (int x = mario.mapX - 5; x < mario.mapX + 12; x++) {
+            for (int y = 0; y < level.height; y++) {
+                byte blockType = level.getBlock(x, y);
+//                System.out.println(blockType);
+                int learnArrayPos = getLearningArrayPosFromCoord(x, y);
+                gameState[learnArrayPos] = blockType;
+//                System.out.println("block x: " + x + ", y: "+y+ "= " + level.getBlock(x, y));
+            }
+        }
+
+        for (Sprite sprite: sprites) {
+            int learnArrayPos = getLearningArrayPos(sprite);
+            if (sprite != mario)
+                gameState[learnArrayPos] = sprite.kind;
+        }
+
+        //this is the end of the grid detection around mario and begins arbitrary parameter insertion into data array
+        int LEARNING_ARRAY_ARBITRARY_PARAM_START = LEARNING_ARRAY_COLUMNS * LEARNING_ARRAY_ROWS;
+
+        //encode mario's ability to jump
+        gameState[LEARNING_ARRAY_ARBITRARY_PARAM_START] = mario.mayJump() ? 1 : 0;
+
+        //encode mario's state
+        if(mario.large) //mario is large
+            gameState[LEARNING_ARRAY_ARBITRARY_PARAM_START + 1] = 1;
+        else if(mario.fire) //mario is on fire
+            gameState[LEARNING_ARRAY_ARBITRARY_PARAM_START + 1] = 2;
+        else //mario is not large or on fire
+            gameState[LEARNING_ARRAY_ARBITRARY_PARAM_START + 1] = 0;
+
+        //encode mario's x and y velocity
+        gameState[LEARNING_ARRAY_ARBITRARY_PARAM_START + 2] = (int) mario.xa;
+        gameState[LEARNING_ARRAY_ARBITRARY_PARAM_START + 3] = (int) mario.ya;
+
+        //encode mario's x distance in the level
+        gameState[LEARNING_ARRAY_ARBITRARY_PARAM_START + 4] = (int) mario.x;
+
+        String line = "";
+        for (int x = 0; x < gameState.length; x++) {
+            line += gameState[x];
+            if (x != gameState.length - 1)
+                line += ", ";
+        }
+
+        try {
+            fw.write(line);
+            linesWritten++;
+        } catch (IOException e) {
+            System.out.println("Failed to write");
+        }
+        if (linesWritten > 1000) {
+            try {
+                fw.close();
+            } catch (IOException e) {
+                System.out.println("couldn't close" + e);
+            }
+        }
+    }
+
     public void tick()
     {
         timeLeft--;
@@ -254,6 +366,8 @@ public class LevelScene implements SpriteContext, Cloneable
         if (xCam > level.width * 16 - 320) xCam = level.width * 16 - 320;
 
         fireballsOnScreen = 0;
+
+        dumpGameState();
 
         for (Sprite sprite : sprites)
         {
