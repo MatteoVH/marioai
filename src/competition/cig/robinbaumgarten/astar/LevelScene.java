@@ -52,6 +52,8 @@ public class LevelScene implements SpriteContext, Cloneable
 
     public FileWriter fw = null;
     public int linesWritten = 0;
+
+    public static int rowLabel = 0;
     
     public static List<Sprite> cloneList(List<Sprite> list) throws CloneNotSupportedException {
         List<Sprite> clone = new ArrayList<Sprite>(list.size());
@@ -97,8 +99,8 @@ public class LevelScene implements SpriteContext, Cloneable
     
     private int totalTime = 200;
     
-    public boolean setLevelScene(byte[][] data)
-    {
+    public boolean setLevelScene(byte[][] data) {
+
         int HalfObsWidth = 11;
         int HalfObsHeight = 11;
         int MarioXInMap = (int)mario.x/16;
@@ -278,6 +280,8 @@ public class LevelScene implements SpriteContext, Cloneable
         if(mario.mapX < 30 || mario.mapX > 140)
             return;
         int[] gameState = new int[LEARNING_ARRAY_COLUMNS * LEARNING_ARRAY_ROWS + LEARNING_ARBITRARY_DIMENSIONS];
+
+        //zero out entire array
         for(int x = 0; x < gameState.length; x++)
             gameState[x] = 0;
 
@@ -286,8 +290,8 @@ public class LevelScene implements SpriteContext, Cloneable
 
         for (int x = mario.mapX - 5; x < mario.mapX + 12; x++) {
             for (int y = 0; y < level.height; y++) {
-                byte blockType = level.getBlock(x, y);
-//                System.out.println(blockType);
+                int blockType = level.getBlock(x, y);
+                //System.out.println(blockType);
                 int learnArrayPos = getLearningArrayPosFromCoord(x, y);
                 gameState[learnArrayPos] = blockType;
 //                System.out.println("block x: " + x + ", y: "+y+ "= " + level.getBlock(x, y));
@@ -321,11 +325,13 @@ public class LevelScene implements SpriteContext, Cloneable
         //encode mario's x distance in the level
         gameState[LEARNING_ARRAY_ARBITRARY_PARAM_START + 4] = (int) mario.x;
 
-        String line = "";
+        String line = "" + rowLabel++ + ", ";
         for (int x = 0; x < gameState.length; x++) {
             line += gameState[x];
             if (x != gameState.length - 1)
                 line += ", ";
+            else
+                line += "\n";
         }
 
         try {
