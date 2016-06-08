@@ -25,6 +25,26 @@ public class NNSimulator
     public int timeBudget = 20; // ms
     public static final int visitedListPenalty = 1500;
 
+
+	/* SEBAS CODE */
+
+	// TODO: delete this
+	public double[] centroids;
+
+	// passed current game snapshot as argument,
+	// compares against centroids to determine matching state
+	public int determineState(double[] game_snap)
+	{
+		for (int i = 1; i < centroids.length(); i++)
+		{
+
+		}
+
+	}
+
+	/* SEBAS CODE */
+
+
     //private int visitedClashes = 0;
     //private LevelScene lsCopy;
 
@@ -529,7 +549,6 @@ public class NNSimulator
 
 	public boolean[] getMove()
 	{
-
 		boolean[] action = new boolean[]{false, true, false, false, true};
         return action;
 	}
