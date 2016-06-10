@@ -15,6 +15,8 @@ public class NNAgent implements Agent
     private float lastY = 0;
 	int errCount = 0;
 	NNAgent errAgent;
+
+	private int alternator = 0;
     public void reset()
     {
         action = new boolean[Environment.numberOfButtons];
@@ -100,8 +102,15 @@ public class NNAgent implements Agent
 		lastY = f[1];
 
 		/* action contains agent's next action, sim.optimise() determines best next move */
-        action = sim.getAction();
+		if (alternator == 12) {
+			action = new boolean[]{false, false, false, false, false};
+			alternator = 0;
+		}
+		else {
+			action = sim.getAction();
+			alternator++;
 
+		}
 		/* uncomment this and mario will do nothing */
 		//action = new boolean[]{false, false, false, false, false};
 
