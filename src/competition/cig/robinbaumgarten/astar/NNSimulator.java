@@ -275,7 +275,7 @@ public class NNSimulator {
 		{
 			for (int j = 0; j < 12; j++)
 			{
-				qtable[i][j] = (float)(random()*1000);
+				qtable[i][j] = (float)(random()*0.5);
 			}
 		}
     }
