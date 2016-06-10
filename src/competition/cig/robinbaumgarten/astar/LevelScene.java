@@ -280,8 +280,6 @@ public class LevelScene implements SpriteContext, Cloneable
     }
 
     public void dumpStateAndReward(boolean dumpReward) {
-        if(mario.mapX < 30 || mario.mapX > 140)
-            return;
         double[] gameState = new double[LEARNING_ARRAY_COLUMNS * LEARNING_ARRAY_ROWS + LEARNING_ARBITRARY_DIMENSIONS];
 
         //zero out entire array
