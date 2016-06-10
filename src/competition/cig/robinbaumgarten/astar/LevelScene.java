@@ -55,8 +55,8 @@ public class LevelScene implements SpriteContext, Cloneable
 
     public static int rowLabel = 0;
 
-    public float lastXCamPos = 0;
-    
+    public int lastRecordedDamage = 0;
+
     public static List<Sprite> cloneList(List<Sprite> list) throws CloneNotSupportedException {
         List<Sprite> clone = new ArrayList<Sprite>(list.size());
         for(Sprite item: list) clone.add((Sprite) item.clone());
@@ -399,6 +399,18 @@ public class LevelScene implements SpriteContext, Cloneable
 
         float reward = mario.x - mario.xOld;
 
+        if (mario.status == Mario.STATUS_DEAD)
+            reward -= (float) 50;
+
+        if (mario.status == Mario.STATUS_WIN)
+            reward += (float) 100;
+
+        if (lastRecordedDamage < mario.damage) {
+            lastRecordedDamage = mario.damage;
+            reward -= 25;
+        }
+
+
         NNSimulator.updateAction(gameState, reward);
     }
 
@@ -500,7 +512,8 @@ public class LevelScene implements SpriteContext, Cloneable
 
         fireballsOnScreen = 0;
 
-        dumpGameState();
+        if (tick % 24 == 0)
+            dumpStateAndReward();
 
         for (Sprite sprite : sprites)
         {
