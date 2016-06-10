@@ -340,10 +340,14 @@ public class LevelScene implements SpriteContext, Cloneable
                 reward = -250;
             } else {
                 reward = mario.x - lastDumpMarioX;
-                if (reward > 0)
-                    reward *= 0.75;
+                if (reward == 0)
+                    reward = -25;
+                else if (reward > 0)
+                    reward *= 2.5;
                 lastDumpMarioX = mario.x;
             }
+
+            System.out.println(reward);
 
             NNSimulator.updateAction(gameState, reward);
         }
