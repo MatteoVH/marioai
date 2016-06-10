@@ -86,7 +86,7 @@ public class NNSimulator {
 		double min_dist = -1;
 		int best_state  = -1;
 
-		for (int i = 0; i < 36; i++)
+		for (int i = 0; i < centroids.length; i++)
 		{
 			double running_sum = 0;
 			for (int j = 0; j < 305; j++)
@@ -243,8 +243,8 @@ public class NNSimulator {
 		recent_actions = new ArrayList<Integer[]>();
 
 		// initialize qtable to have values between 0 and 100
-		qtable = new float[36][12];
-		for (int i = 0; i < 36; i++)
+		qtable = new float[centroids.length][12];
+		for (int i = 0; i < centroids.length; i++)
 		{
 			for (int j = 0; j < 12; j++)
 			{
@@ -671,7 +671,7 @@ public class NNSimulator {
 
 				// normalize q table
 				float max_val = 0;
-				for (int i = 0; i <36; i++)
+				for (int i = 0; i < centroids.length; i++)
 				{
 					for (int j = 0; j < 12; j++)
 					{
@@ -684,7 +684,7 @@ public class NNSimulator {
 				}
 
 				// divide all values by max magnitude
-				for (int i = 0; i <36; i++)
+				for (int i = 0; i < centroids.length; i++)
 				{
 					for (int j = 0; j < 12; j++)
 					{
