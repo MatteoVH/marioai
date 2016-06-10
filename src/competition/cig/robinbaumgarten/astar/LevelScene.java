@@ -53,6 +53,8 @@ public class LevelScene implements SpriteContext, Cloneable
     public FileWriter fw = null;
     public int linesWritten = 0;
 
+    public float lastDumpMarioX = 0;
+
     public static int rowLabel = 0;
 
     public int lastRecordedDamage = 0;
@@ -348,7 +350,7 @@ public class LevelScene implements SpriteContext, Cloneable
         }
     }
 
-    public void dumpStateAndReward() {
+    public void dumpStateAndReward(boolean dumpReward) {
         if(mario.mapX < 30 || mario.mapX > 140)
             return;
         int[] gameState = new int[LEARNING_ARRAY_COLUMNS * LEARNING_ARRAY_ROWS + LEARNING_ARBITRARY_DIMENSIONS];
@@ -397,21 +399,27 @@ public class LevelScene implements SpriteContext, Cloneable
         //encode mario's x distance in the level
         gameState[LEARNING_ARRAY_ARBITRARY_PARAM_START + 4] = (int) mario.x;
 
-        float reward = mario.x - mario.xOld;
 
-        if (mario.status == Mario.STATUS_DEAD)
-            reward -= (float) 50;
+        if (!dumpReward) {
+            NNSimulator.updateAction(gameState, -2500);
+        } else {
+            float reward;
+            if (mario.status == Mario.STATUS_DEAD)
+                reward = (float) -1000;
+            else if (mario.status == Mario.STATUS_WIN)
+                reward = (float) 1000;
+            else if (lastRecordedDamage < mario.damage) {
+                lastRecordedDamage = mario.damage;
+                reward = -250;
+            } else {
+                reward = mario.x - lastDumpMarioX;
+                if (reward > 0)
+                    reward *= 0.75;
+                lastDumpMarioX = mario.x;
+            }
 
-        if (mario.status == Mario.STATUS_WIN)
-            reward += (float) 100;
-
-        if (lastRecordedDamage < mario.damage) {
-            lastRecordedDamage = mario.damage;
-            reward -= 25;
+            NNSimulator.updateAction(gameState, reward);
         }
-
-
-        NNSimulator.updateAction(gameState, reward);
     }
 
     //dump all the enemy
@@ -513,7 +521,9 @@ public class LevelScene implements SpriteContext, Cloneable
         fireballsOnScreen = 0;
 
         if (tick % 24 == 0)
-            dumpStateAndReward();
+            dumpStateAndReward(true);
+        else if (tick % 6 == 0)
+            dumpStateAndReward(false);
 
         for (Sprite sprite : sprites)
         {
