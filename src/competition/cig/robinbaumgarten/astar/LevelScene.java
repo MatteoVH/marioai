@@ -277,83 +277,12 @@ public class LevelScene implements SpriteContext, Cloneable
         //System.out.println("position calculated: " + (xPosRelativeToCamera + yBoost));
 
         return xPosRelativeToCamera + yBoost;
-    }{
-        if(mario.mapX < 30 || mario.mapX > 140)
-            return;
-        int[] gameState = new int[LEARNING_ARRAY_COLUMNS * LEARNING_ARRAY_ROWS + LEARNING_ARBITRARY_DIMENSIONS];
-
-        //zero out entire array
-        for(int x = 0; x < gameState.length; x++)
-            gameState[x] = 0;
-
-        //System.out.println(mario.mapX);
-        //System.out.println(level.width);
-
-        for (int x = mario.mapX - 5; x < mario.mapX + 12; x++) {
-            for (int y = 0; y < level.height; y++) {
-                int blockType = level.getBlock(x, y);
-                //System.out.println(blockType);
-                int learnArrayPos = getLearningArrayPosFromCoord(x, y);
-                gameState[learnArrayPos] = blockType;
-//                System.out.println("block x: " + x + ", y: "+y+ "= " + level.getBlock(x, y));
-            }
-        }
-
-        for (Sprite sprite: sprites) {
-            int learnArrayPos = getLearningArrayPos(sprite);
-            if (sprite != mario)
-                gameState[learnArrayPos] = sprite.kind;
-        }
-
-        //this is the end of the grid detection around mario and begins arbitrary parameter insertion into data array
-        int LEARNING_ARRAY_ARBITRARY_PARAM_START = LEARNING_ARRAY_COLUMNS * LEARNING_ARRAY_ROWS;
-
-        //encode mario's ability to jump
-        gameState[LEARNING_ARRAY_ARBITRARY_PARAM_START] = mario.mayJump() ? 1 : 0;
-
-        //encode mario's state
-        if(mario.large) //mario is large
-            gameState[LEARNING_ARRAY_ARBITRARY_PARAM_START + 1] = 1;
-        else if(mario.fire) //mario is on fire
-            gameState[LEARNING_ARRAY_ARBITRARY_PARAM_START + 1] = 2;
-        else //mario is not large or on fire
-            gameState[LEARNING_ARRAY_ARBITRARY_PARAM_START + 1] = 0;
-
-        //encode mario's x and y velocity
-        gameState[LEARNING_ARRAY_ARBITRARY_PARAM_START + 2] = (int) mario.xa;
-        gameState[LEARNING_ARRAY_ARBITRARY_PARAM_START + 3] = (int) mario.ya;
-
-        //encode mario's x distance in the level
-        gameState[LEARNING_ARRAY_ARBITRARY_PARAM_START + 4] = (int) mario.x;
-
-        String line = "" + rowLabel++ + ", ";
-        for (int x = 0; x < gameState.length; x++) {
-            line += gameState[x];
-            if (x != gameState.length - 1)
-                line += ", ";
-            else
-                line += "\n";
-        }
-
-        try {
-            fw.write(line);
-            linesWritten++;
-        } catch (IOException e) {
-            System.out.println("Failed to write");
-        }
-        if (linesWritten > 1000) {
-            try {
-                fw.close();
-            } catch (IOException e) {
-                System.out.println("couldn't close" + e);
-            }
-        }
     }
 
     public void dumpStateAndReward(boolean dumpReward) {
         if(mario.mapX < 30 || mario.mapX > 140)
             return;
-        int[] gameState = new int[LEARNING_ARRAY_COLUMNS * LEARNING_ARRAY_ROWS + LEARNING_ARBITRARY_DIMENSIONS];
+        double[] gameState = new double[LEARNING_ARRAY_COLUMNS * LEARNING_ARRAY_ROWS + LEARNING_ARBITRARY_DIMENSIONS];
 
         //zero out entire array
         for(int x = 0; x < gameState.length; x++)
@@ -393,11 +322,11 @@ public class LevelScene implements SpriteContext, Cloneable
             gameState[LEARNING_ARRAY_ARBITRARY_PARAM_START + 1] = 0;
 
         //encode mario's x and y velocity
-        gameState[LEARNING_ARRAY_ARBITRARY_PARAM_START + 2] = (int) mario.xa;
-        gameState[LEARNING_ARRAY_ARBITRARY_PARAM_START + 3] = (int) mario.ya;
+        gameState[LEARNING_ARRAY_ARBITRARY_PARAM_START + 2] = mario.xa;
+        gameState[LEARNING_ARRAY_ARBITRARY_PARAM_START + 3] = mario.ya;
 
         //encode mario's x distance in the level
-        gameState[LEARNING_ARRAY_ARBITRARY_PARAM_START + 4] = (int) mario.x;
+        gameState[LEARNING_ARRAY_ARBITRARY_PARAM_START + 4] = mario.x;
 
 
         if (!dumpReward) {
