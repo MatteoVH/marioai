@@ -337,14 +337,15 @@ public class LevelScene implements SpriteContext, Cloneable
                 reward = (float) 1000;
             else if (lastRecordedDamage < mario.damage) {
                 lastRecordedDamage = mario.damage;
-                reward = -250;
+                reward = -500;
             } else {
                 reward = mario.x - lastDumpMarioX;
                 if (reward == 0)
-                    reward = -25;
+                    reward = -100;
                 else if (reward > 0)
-                    reward *= 2.5;
-                lastDumpMarioX = mario.x;
+                    reward *= 0.75;
+                if (mario.x > lastDumpMarioX)
+                    lastDumpMarioX = mario.x;
             }
 
             System.out.println(reward);
@@ -451,7 +452,7 @@ public class LevelScene implements SpriteContext, Cloneable
 
         fireballsOnScreen = 0;
 
-        if (tick % 24 == 0)
+        if (tick % 48 == 0)
             dumpStateAndReward(true);
         else if (tick % 6 == 0)
             dumpStateAndReward(false);
